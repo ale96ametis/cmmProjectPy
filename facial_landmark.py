@@ -12,7 +12,7 @@ import cv2
 import threading
 from PIL import Image, ImageTk
 
-def recording(label):
+def recording():
 	# initialize dlib's face detector (HOG-based) and then create
 	# the facial landmark predictor
 	print("[INFO] loading facial landmark predictor...")
@@ -52,16 +52,12 @@ def recording(label):
 		  
 		# show the frame
 		frame = cv2.flip(frame,1)
-		cv2.imshow("window", frame)
-		#im = Image.fromarray(frame)
-		#imgtk = ImageTk.PhotoImage(image=im) 
 
 		# Put it in the display window
-		#label = Label(window)
-		#label.config(image=imgtk)
-		#label.image = imagetk
-		#label = Label(window, image=imgtk)
-		#label.pack()
+		img = Image.fromarray(frame)
+		imgtk = ImageTk.PhotoImage(img)
+		lbl.config(image=imgtk)
+		lbl.img = imgtk
 	
 		#Save frame for video		
 		out.write(frame)
@@ -69,30 +65,39 @@ def recording(label):
 		key = cv2.waitKey(1) & 0xFF
 	 
 		# if the `q` key was pressed, break from the loop
-		if key == ord("q"):
+		if key == ord("q") or stop == True:
+			print("[INFO] Stopping video and saving file...")
+			#Stop recording			
+			vs.stop()
+			out.release()
 			break
-	 
-	# do a bit of cleanup
-	vs.stop()
-	out.release()
-	cv2.destroyAllWindows()
 
-if __name__ == "__main__":
-	root = Tk()
-	my_label = Label(root)
-	my_label.pack()
-	thread = threading.Thread(target=recording, args=(my_label,))
-	thread.daemon = 1
-	thread.start()
-	root.mainloop()
-	# Create window
-	#cv2.namedWindow("window")
-	#window = Tk()
-	#window.title("Recording App")
-	#window.geometry("640x480")
-	#button = Button(window, text="Start", command=recording)
+def stop_():
+	global stop
+	stop = True
 
-	#button.pack()
+def play():
+	t = threading.Thread(target=recording)
+	t.start()
 
-	#mainloop()
+
+win = Tk()
+
+win.geometry("800x600")
+win.title("Recording app")
+stop = False
+
+Label(text='Press Play Button').pack()
+frm_ = Frame(bg='black')
+frm_.pack()
+lbl = Label(frm_, bg='black')
+lbl.pack(expand=True)
+#lbl.bind('<Double-Button-1>', size)
+
+frm = Frame()
+frm.pack()
+Button(text='Play', command = play).pack(side=LEFT)
+Button(text='Stop', command = stop_).pack(side=LEFT)
+
+win.mainloop()
 
