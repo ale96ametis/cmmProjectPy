@@ -1,8 +1,7 @@
 # import the necessary packages
 from tkinter import *
-import numpy as np
+from PIL import Image, ImageTk
 from imutils.video import VideoStream
-#from imutils import VideoStream
 from imutils import face_utils
 import datetime
 import imutils
@@ -10,7 +9,8 @@ import time
 import dlib
 import cv2
 import threading
-from PIL import Image, ImageTk
+import numpy as np
+import os, sys
 
 def recording():
 	# initialize dlib's face detector (HOG-based) and then create
@@ -26,9 +26,9 @@ def recording():
 	fourcc = cv2.VideoWriter_fourcc(*'XVID')
 	out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640,480))
 	# loop over the frames from the video stream
-	while True:
+	while stop == False:
 		# grab the frame from the threaded video stream, resize it to
-		# have a maximum width of 400 pixels, and convert it to
+		# have a maximum width of 640 pixels, and convert it to
 		# grayscale
 		frame = vs.read()
 		frame = imutils.resize(frame, width=640)
@@ -54,7 +54,8 @@ def recording():
 		frame = cv2.flip(frame,1)
 
 		# Put it in the display window
-		img = Image.fromarray(frame)
+		img = Image.fromarray(frame, mode='RGB')
+		img = img.resize((400,400))
 		imgtk = ImageTk.PhotoImage(img)
 		lbl.config(image=imgtk)
 		lbl.img = imgtk
@@ -71,33 +72,51 @@ def recording():
 			vs.stop()
 			out.release()
 			break
+	vs.stop()
+	out.release()
+	return
 
 def stop_():
 	global stop
 	stop = True
+	
 
 def play():
+	global stop
+	stop = False
 	t = threading.Thread(target=recording)
 	t.start()
 
-
+#Initialize Tkinter
 win = Tk()
-
+#Reading file with phrases
+f = open("frasi.txt","r")
+myList = []
+for line in f:
+	myList.append(line)
+n = 7
+phrase = myList[n]
+#Windows
 win.geometry("800x600")
 win.title("Recording app")
-stop = False
+#Frame
+frm = Frame(win)
+frm.pack(expand=True)
+print("[TESTO]: ", phrase)
+stop = None
+#Label video
+tmp_img = ImageTk.PhotoImage(Image.new('RGB',(400,400)))
 
-Label(text='Press Play Button').pack()
-frm_ = Frame(bg='black')
-frm_.pack()
-lbl = Label(frm_, bg='black')
-lbl.pack(expand=True)
-#lbl.bind('<Double-Button-1>', size)
-
-frm = Frame()
-frm.pack()
-Button(text='Play', command = play).pack(side=LEFT)
-Button(text='Stop', command = stop_).pack(side=LEFT)
+lbl = Label(frm)
+lbl.config(image=tmp_img)
+lbl.img = tmp_img
+lbl.grid(row=1, column=1,rowspan=2)
+#Label text
+text = Label(frm, text=phrase, wraplength=200, justify='center')
+text.grid(row=1, column=2, columnspan=4,rowspan=2)
+#Buttons
+Button(frm, text='Play', command = play).grid(row=2, column=3)
+Button(frm, text='Stop', command = stop_).grid(row=2, column=4)
 
 win.mainloop()
 
