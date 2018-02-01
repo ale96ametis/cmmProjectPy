@@ -3,6 +3,7 @@ from tkinter import *
 from PIL import Image, ImageTk
 from imutils.video import VideoStream
 from imutils import face_utils
+from random import randint
 import datetime
 import imutils
 import time
@@ -24,7 +25,8 @@ def recording():
 	vs = VideoStream(0).start()
 	time.sleep(2.0)
 	fourcc = cv2.VideoWriter_fourcc(*'XVID')
-	out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640,480))
+	global name_video
+	out = cv2.VideoWriter(name_video, fourcc, 20.0, (640,480))
 	# loop over the frames from the video stream
 	while stop == False:
 		# grab the frame from the threaded video stream, resize it to
@@ -55,7 +57,7 @@ def recording():
 
 		# Put it in the display window
 		img = Image.fromarray(frame, mode='RGB')
-		img = img.resize((400,400))
+		img = img.resize((500,400))
 		imgtk = ImageTk.PhotoImage(img)
 		lbl.config(image=imgtk)
 		lbl.img = imgtk
@@ -79,7 +81,10 @@ def recording():
 def stop_():
 	global stop
 	stop = True
-	
+	global i
+	global name_video
+	i = i+1
+	name_video='output_phrase[%d]_[%d].avi' %(n, i)
 
 def play():
 	global stop
@@ -94,8 +99,11 @@ f = open("frasi.txt","r")
 myList = []
 for line in f:
 	myList.append(line)
-n = 7
+n = randint(0,len(myList))
+i = 0
 phrase = myList[n]
+name_video='output_phrase[%d]_[%d].avi' %(n, i)
+print("[INFO]Video name: ", name_video)
 #Windows
 win.geometry("800x600")
 win.title("Recording app")
@@ -105,7 +113,7 @@ frm.pack(expand=True)
 print("[TESTO]: ", phrase)
 stop = None
 #Label video
-tmp_img = ImageTk.PhotoImage(Image.new('RGB',(400,400)))
+tmp_img = ImageTk.PhotoImage(Image.new('RGB',(500,400)))
 
 lbl = Label(frm)
 lbl.config(image=tmp_img)
