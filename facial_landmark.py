@@ -31,7 +31,7 @@ def recording():
 	global name_video
 	out = cv2.VideoWriter(name_video, fourcc, 20.0, (640,480))
 	#Set audio
-	print("[INFO] audio settings...")
+	"""print("[INFO] audio settings...")
 	#global FORMAT
 	#global CHANNELS
 	#global RATE
@@ -43,7 +43,7 @@ def recording():
 			channels=CHANNELS,
 			rate=RATE,
 			input=True,
-			frames_per_buffer=CHUNK)
+			frames_per_buffer=CHUNK)"""
 	# loop over the frames from the video stream
 	while stop == False:
 		# grab the frame from the threaded video stream, resize it to
@@ -81,9 +81,9 @@ def recording():
 	
 		#Save frame for video		
 		out.write(frame)
-		#Save audio
+		"""#Save audio
 		data = stream.read(CHUNK)
-		frames.append(data)
+		frames.append(data)"""
 
 		key = cv2.waitKey(1) & 0xFF
 	 
@@ -95,6 +95,46 @@ def recording():
 	#Stop recording			
 	vs.stop()
 	out.release()
+	"""stream.stop_stream()
+	stream.close()
+	p.terminate()
+	wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+	wf.setnchannels(CHANNELS)
+	wf.setsampwidth(p.get_sample_size(FORMAT))
+	wf.setframerate(RATE)
+	wf.writeframes(b''.join(frames))
+	wf.close()"""	
+	print('SAVED!')
+	
+	return
+def record_audio():
+	time.sleep(4)
+	print("[INFO] audio settings...")
+	global frames
+	global stream
+	global p
+	frames = []
+	p = pyaudio.PyAudio()
+	stream = p.open(format=FORMAT,
+			channels=CHANNELS,
+			rate=RATE,
+			input=True,
+			frames_per_buffer=CHUNK)
+	print("[INFO] recording audio...")
+	for a in range(0, int(RATE / CHUNK * 9999)):
+		data = stream.read(CHUNK)
+		frames.append(data)
+		if (stop==True):
+			break
+
+	
+def stop_():
+	global stop
+	global WAVE_OUTPUT_FILENAME
+	global stream
+	global p
+	global frames
+	stop = True
 	stream.stop_stream()
 	stream.close()
 	p.terminate()
@@ -104,16 +144,8 @@ def recording():
 	wf.setframerate(RATE)
 	wf.writeframes(b''.join(frames))
 	wf.close()	
-	print('SAVED!')
-	
-	return
-
-def stop_():
-	global stop
-	stop = True
 	global i
 	global name_video
-	global WAVE_OUTPUT_FILENAME
 	i = i+1
 	name_video='output_phrase[%d]_[%d].avi' %(n, i)
 	WAVE_OUTPUT_FILENAME = 'audio_phrase[%d]_[%d].wav' %(n, i)
@@ -123,6 +155,8 @@ def play():
 	stop = False
 	t = threading.Thread(target=recording)
 	t.start()
+	t2 = threading.Thread(target=record_audio)
+	t2.start()
 
 #Initialize Tkinter
 win = Tk()
