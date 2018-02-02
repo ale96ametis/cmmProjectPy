@@ -24,6 +24,12 @@ def recording():
 
 	# initialize the video stream and allow the camera sensor to warmup
 	print("[INFO] camera sensor warming up...")
+	#Set video
+	vs = VideoStream(0).start()
+	time.sleep(2.0)
+	fourcc = cv2.VideoWriter_fourcc(*'XVID')
+	global name_video
+	out = cv2.VideoWriter(name_video, fourcc, 20.0, (640,480))
 	#Set audio
 	print("[INFO] audio settings...")
 	#global FORMAT
@@ -31,20 +37,13 @@ def recording():
 	#global RATE
 	#global CHUNK
 	#global WAVE_OUTPUT_FILENAME
+	frames = []
 	p = pyaudio.PyAudio()
 	stream = p.open(format=FORMAT,
 			channels=CHANNELS,
 			rate=RATE,
 			input=True,
-			input_device_index=2,
 			frames_per_buffer=CHUNK)
-	frames = []
-	#Set video
-	vs = VideoStream(0).start()
-	time.sleep(2.0)
-	fourcc = cv2.VideoWriter_fourcc(*'XVID')
-	global name_video
-	out = cv2.VideoWriter(name_video, fourcc, 20.0, (640,480))
 	# loop over the frames from the video stream
 	while stop == False:
 		# grab the frame from the threaded video stream, resize it to
@@ -114,6 +113,7 @@ def stop_():
 	stop = True
 	global i
 	global name_video
+	global WAVE_OUTPUT_FILENAME
 	i = i+1
 	name_video='output_phrase[%d]_[%d].avi' %(n, i)
 	WAVE_OUTPUT_FILENAME = 'audio_phrase[%d]_[%d].wav' %(n, i)
