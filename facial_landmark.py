@@ -12,6 +12,8 @@ import cv2
 import threading
 import numpy as np
 import os, sys
+import pyaudio
+import wave
 
 def recording():
 	# initialize dlib's face detector (HOG-based) and then create
@@ -22,6 +24,22 @@ def recording():
 
 	# initialize the video stream and allow the camera sensor to warmup
 	print("[INFO] camera sensor warming up...")
+	#Set audio
+	print("[INFO] audio settings...")
+	#global FORMAT
+	#global CHANNELS
+	#global RATE
+	#global CHUNK
+	#global WAVE_OUTPUT_FILENAME
+	p = pyaudio.PyAudio()
+	stream = p.open(format=FORMAT,
+			channels=CHANNELS,
+			rate=RATE,
+			input=True,
+			input_device_index=2,
+			frames_per_buffer=CHUNK)
+	frames = []
+	#Set video
 	vs = VideoStream(0).start()
 	time.sleep(2.0)
 	fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -64,18 +82,31 @@ def recording():
 	
 		#Save frame for video		
 		out.write(frame)
-	
+		#Save audio
+		data = stream.read(CHUNK)
+		frames.append(data)
+
 		key = cv2.waitKey(1) & 0xFF
 	 
 		# if the `q` key was pressed, break from the loop
 		if key == ord("q") or stop == True:
 			print("[INFO] Stopping video and saving file...")
-			#Stop recording			
-			vs.stop()
-			out.release()
+			
 			break
+	#Stop recording			
 	vs.stop()
 	out.release()
+	stream.stop_stream()
+	stream.close()
+	p.terminate()
+	wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+	wf.setnchannels(CHANNELS)
+	wf.setsampwidth(p.get_sample_size(FORMAT))
+	wf.setframerate(RATE)
+	wf.writeframes(b''.join(frames))
+	wf.close()	
+	print('SAVED!')
+	
 	return
 
 def stop_():
@@ -85,6 +116,7 @@ def stop_():
 	global name_video
 	i = i+1
 	name_video='output_phrase[%d]_[%d].avi' %(n, i)
+	WAVE_OUTPUT_FILENAME = 'audio_phrase[%d]_[%d].wav' %(n, i)
 
 def play():
 	global stop
@@ -125,6 +157,14 @@ text.grid(row=1, column=2, columnspan=4,rowspan=2)
 #Buttons
 Button(frm, text='Play', command = play).grid(row=2, column=3)
 Button(frm, text='Stop', command = stop_).grid(row=2, column=4)
+#Initialize audio
+CHUNK = 1024
+FORMAT = pyaudio.paInt16
+CHANNELS = 2
+RATE = 44100
+WAVE_OUTPUT_FILENAME = 'audio_phrase[%d]_[%d].wav' %(n, i)
+
+
 
 win.mainloop()
 
