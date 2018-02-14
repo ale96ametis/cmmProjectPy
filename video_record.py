@@ -59,7 +59,7 @@ class VideoRecorder():
 				lbl.img = imgtk
 				"""
 				cv2.imshow('video_frame', video_frame)
-				cv2.waitKey(1)
+				cv2.waitKey(1)	
 				"""
 				# 0.16 delay -> 6 fps
 				#
@@ -218,13 +218,15 @@ def landmarks():
 
 				# loop over the (x, y)-coordinates for the facial landmarks
 				# and draw them on the image
+				mouth_marker = 0
 				for (x, y) in shape:
-					cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
-					out_file.write(str(x))
-					out_file.write("\n")
-					out_file.write(str(y))
-					out_file.write("\n")
-
+					if (mouth_marker>47 and mouth_marker<68):
+						cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
+						out_file.write(str(x))
+						out_file.write("\n")
+						out_file.write(str(y))
+						out_file.write("\n")
+					mouth_marker += 1
 				out_file.write("1000\n")
 			out_file.close() 
 			frame = cv2.resize(frame, (640,480))
