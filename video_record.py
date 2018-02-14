@@ -75,7 +75,9 @@ class VideoRecorder():
 			self.open=False
 			self.video_out.release()
 			self.video_cap.release()
-			#cv2.destroyAllWindows()
+			cv2.destroyAllWindows()
+		else:
+			pass
 
 
 	# Launches the video recording function using a thread			
@@ -127,6 +129,7 @@ class AudioRecorder():
 			waveFile.setframerate(self.rate)
 			waveFile.writeframes(b''.join(self.audio_frames))
 			waveFile.close()
+		pass
 
 	# Launches the audio recording function using a thread
 	def start(self):
