@@ -207,6 +207,8 @@ def landmarks():
 			gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 			faces = detector(gray, 0)
 			#loop over the face detections
+			marker='marker[%d]_[%d].txt' %(n, i)
+			out_file = open(marker,"a")
 			for face in faces:
 				# determine the facial landmarks for the face region, then
 				# convert the facial landmark (x, y)-coordinates to a NumPy
@@ -218,6 +220,13 @@ def landmarks():
 				# and draw them on the image
 				for (x, y) in shape:
 					cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
+					out_file.write(str(x))
+					out_file.write("\n")
+					out_file.write(str(y))
+					out_file.write("\n")
+
+				out_file.write("1000\n")
+			out_file.close() 
 			frame = cv2.resize(frame, (640,480))
 			#cv2.imshow('frame',frame)
 			out.write(frame)
