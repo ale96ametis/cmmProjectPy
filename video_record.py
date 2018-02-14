@@ -136,24 +136,27 @@ class AudioRecorder():
 def start_AVrecording():
 	
 	global video_thread
-	global audio_thread
+	#global audio_thread
 
 	video_thread = VideoRecorder()
-	audio_thread = AudioRecorder()
+	#audio_thread = AudioRecorder()
 
-	audio_thread.start()
+	#audio_thread.start()
 	video_thread.start()
 
 	return
 
 def stop_AVrecording():
+	global i
+	global name_video
 	print("Stopping recording")
-	audio_thread.stop()
+	#audio_thread.stop()
 	video_thread.stop()
 	landmarks()
-	muxing()
+	#muxing()
 	file_manager()
 	i = i+1
+	name_video = 'output_phrase[%d]_[%d].avi' %(n, i)
 	print('[INFO]Video saved')
 	return
 	
@@ -241,8 +244,8 @@ def file_manager():
 	if os.path.exists(str(local_path) + "/temp_video2.avi"):
 		os.remove(str(local_path) + "/temp_video2.avi")
 
-	if os.path.exists(str(local_path) + "/marker-"+str_video):
-		os.remove(str(local_path) + "/marker-"+name_video)
+	#if os.path.exists(str(local_path) + "/marker-"+str_video):
+	#	os.remove(str(local_path) + "/marker-"+name_video)
 
 
 if __name__== "__main__":
@@ -255,6 +258,7 @@ if __name__== "__main__":
 	for line in f:
 		myList.append(line)
 	n = randint(0,(len(myList)-1))
+	global i
 	i = 0
 	phrase = myList[n]
 	global name_video
