@@ -85,57 +85,53 @@ class VideoRecorder():
 
 class AudioRecorder():
 	
+	# Audio class based on pyAudio and Wave
+	def __init__(self):
+		
+		self.open = True
+		self.rate = 44100
+		self.frames_per_buffer = 1024
+		self.channels = 2
+		self.format = pyaudio.paInt16
+		self.audio_filename = "temp_audio.wav"
+		self.audio = pyaudio.PyAudio()
+		self.stream = self.audio.open(format=self.format,
+									  channels=self.channels,
+									  rate=self.rate,
+									  input=True,
+									  frames_per_buffer = self.frames_per_buffer)
+		self.audio_frames = []
 
-    # Audio class based on pyAudio and Wave
-    def __init__(self):
-        
-        self.open = True
-        self.rate = 44100
-        self.frames_per_buffer = 1024
-        self.channels = 2
-        self.format = pyaudio.paInt16
-        self.audio_filename = "temp_audio.wav"
-        self.audio = pyaudio.PyAudio()
-        self.stream = self.audio.open(format=self.format,
-                                      channels=self.channels,
-                                      rate=self.rate,
-                                      input=True,
-                                      frames_per_buffer = self.frames_per_buffer)
-        self.audio_frames = []
+	# Audio starts being recorded
+	def record(self):
 
+		self.stream.start_stream()
+		while(self.open == True):
+			data=self.stream.read(self.frames_per_buffer)
+			self.audio_frames.append(data)
+			if (self.open==False):
+				break
 
-    # Audio starts being recorded
-    def record(self):
-        
-        self.stream.start_stream()
-        while(self.open == True):
-            data=self.stream.read(self.frames_per_buffer)
-            self.audio_frames.append(data)
-            if (self.open==False):
-                break
-            
-            
-    # Finishes the audio recording therefore the thread too    
-    def stop(self):
-       
-        if (self.open==True):
-            self.open = False
-            self.stream.stop_stream()
-            self.stream.close()
-            self.audio.terminate()
+	# Finishes the audio recording therefore the thread too    
+	def stop(self):
+		
+		if (self.open==True):
+			self.open = False
+			self.stream.stop_stream()
+			self.stream.close()
+			self.audio.terminate()
 
-            waveFile = wave.open(self.audio_filename, 'wb')
-            waveFile.setnchannels(self.channels)
-            waveFile.setsampwidth(self.audio.get_sample_size(self.format))
-            waveFile.setframerate(self.rate)
-            waveFile.writeframes(b''.join(self.audio_frames))
-            waveFile.close()
-        
-    
-    # Launches the audio recording function using a thread
-    def start(self):
-        audio_thread = threading.Thread(target=self.record)
-        audio_thread.start()
+			waveFile = wave.open(self.audio_filename, 'wb')
+			waveFile.setnchannels(self.channels)
+			waveFile.setsampwidth(self.audio.get_sample_size(self.format))
+			waveFile.setframerate(self.rate)
+			waveFile.writeframes(b''.join(self.audio_frames))
+			waveFile.close()
+
+	# Launches the audio recording function using a thread
+	def start(self):
+		audio_thread = threading.Thread(target=self.record)
+		audio_thread.start()
 
 def start_AVrecording():
 	
@@ -143,24 +139,26 @@ def start_AVrecording():
 	global audio_thread
 	
 	video_thread = VideoRecorder()
-	#audio_thread = AudioRecorder()
+	audio_thread = AudioRecorder()
 
-	#audio_thread.start()
+	audio_thread.start()
 	video_thread.start()
 
 	return
 
 def stop_AVrecording():
 	print("Stopping recording")
-	#audio_thread.stop()
+	audio_thread.stop()
 	video_thread.stop()
-	#muxing()
 	landmarks()
+	muxing()
+	file_manager()
+	print('[INFO]Video saved')
 	
 def muxing():
 	# Makes sure the threads have finished
-	while threading.active_count() > 1:
-		time.sleep(1)
+	#while threading.active_count() > 1:
+	#	time.sleep(1)
 
 	frame_counts = video_thread.frame_counts
 	elapsed_time = time.time() - video_thread.start_time
@@ -173,17 +171,17 @@ def muxing():
 	if abs(recorded_fps - 6) >= 0.01:    # If the fps rate was higher/lower than expected, re-encode it to the expected
 								
 		print("Re-encoding")
-		cmd = "ffmpeg -r " + str(recorded_fps) + " -i temp_video.avi -pix_fmt yuv420p -r 6 temp_video2.avi"
+		cmd = "ffmpeg -r " + str(recorded_fps) + " -i marker-"+name_video+" -pix_fmt yuv420p -r 6 temp_video2.avi"
 		subprocess.call(cmd, shell=True)
 
 		print("Muxing")
-		cmd = "ffmpeg -ac 2 -channel_layout stereo -i temp_audio.wav -i temp_video2.avi -pix_fmt yuv420p " + "complete.avi"
+		cmd = "ffmpeg -ac 2 -channel_layout stereo -i temp_audio.wav -i temp_video2.avi -pix_fmt yuv420p " + "complete-"+name_video
 		subprocess.call(cmd, shell=True)
 
 	else:
 
 		print("Normal recording\nMuxing")
-		cmd = "ffmpeg -ac 2 -channel_layout stereo -i temp_audio.wav -i temp_video.avi -pix_fmt yuv420p " + "complete.avi"
+		cmd = "ffmpeg -ac 2 -channel_layout stereo -i temp_audio.wav -i marker-"+name_video+" -pix_fmt yuv420p " + "complete-"+name_video
 		subprocess.call(cmd, shell=True)
 
 		print("..")
@@ -192,18 +190,18 @@ def muxing():
 	
 def landmarks():
 	fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-	out = cv2.VideoWriter('Marker-'+name_video, fourcc, 20.0, (640,480))
+	out = cv2.VideoWriter('marker-'+name_video, fourcc, 20.0, (640,480))
 	detector = dlib.get_frontal_face_detector()
 	predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 	cap = cv2.VideoCapture(name_video)
 	print("[INFO]Analysing video...")
 	while(cap.isOpened()):
-		ret, frame = cap.read()
+		ret,frame = cap.read()
 		if (ret):
 			frame = imutils.resize(frame, width=400)
 			gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 			faces = detector(gray, 0)
-			# loop over the face detections
+			#loop over the face detections
 			for face in faces:
 				# determine the facial landmarks for the face region, then
 				# convert the facial landmark (x, y)-coordinates to a NumPy
@@ -215,18 +213,36 @@ def landmarks():
 				# and draw them on the image
 				for (x, y) in shape:
 					cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
-			cv2.imshow('frame',frame)
 			frame = cv2.resize(frame, (640,480))
+			#cv2.imshow('frame',frame)
 			out.write(frame)
 			cv2.waitKey(1)
 		else:
 			out.release()
 			cap.release()
-			cv2.destroyAllWindows()
+			#cv2.destroyAllWindows()
 			break
-	
+	print('[INFO]End!')
 	return
-	
+
+
+# Required and wanted processing of final files
+def file_manager():
+	time.sleep(2)
+	local_path = os.getcwd()
+	str_video = str(name_video)
+	if os.path.exists(str(local_path) + "/temp_audio.wav"):
+		os.remove(str(local_path) + "/temp_audio.wav")
+	if os.path.exists(str(local_path) + "/" + str_video):
+		os.remove(str(local_path) + "/" + str_video)
+
+	if os.path.exists(str(local_path) + "/temp_video2.avi"):
+		os.remove(str(local_path) + "/temp_video2.avi")
+
+	if os.path.exists(str(local_path) + "/marker-"+str_video):
+		os.remove(str(local_path) + "/marker-"+name_video)
+
+
 if __name__== "__main__":
 
 	#Initialize Tkinter
