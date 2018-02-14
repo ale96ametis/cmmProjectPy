@@ -252,8 +252,8 @@ def file_manager():
 	str_video = str(name_video)
 	if os.path.exists(str(local_path) + "/temp_audio.wav"):
 		os.remove(str(local_path) + "/temp_audio.wav")
-	if os.path.exists(str(local_path) + "/" + str_video):
-		os.remove(str(local_path) + "/" + str_video)
+	#if os.path.exists(str(local_path) + "/" + str_video):
+		#os.remove(str(local_path) + "/" + str_video)
 
 	if os.path.exists(str(local_path) + "/temp_video2.avi"):
 		os.remove(str(local_path) + "/temp_video2.avi")
