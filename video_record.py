@@ -220,7 +220,7 @@ def landmarks():
 				# and draw them on the image
 				mouth_marker = 0
 				for (x, y) in shape:
-					if (mouth_marker>47 and mouth_marker<68):
+					if (mouth_marker>47):
 						cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
 						out_file.write(str(x))
 						out_file.write("\n")
