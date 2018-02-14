@@ -137,7 +137,7 @@ def start_AVrecording():
 	
 	global video_thread
 	global audio_thread
-	
+
 	video_thread = VideoRecorder()
 	audio_thread = AudioRecorder()
 
@@ -153,7 +153,9 @@ def stop_AVrecording():
 	landmarks()
 	muxing()
 	file_manager()
+	i = i+1
 	print('[INFO]Video saved')
+	return
 	
 def muxing():
 	# Makes sure the threads have finished
