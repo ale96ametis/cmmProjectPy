@@ -23,7 +23,7 @@ class VideoRecorder():
 		
 		self.open = True
 		self.device_index = 0
-		self.fps = 6               # fps should be the minimum constant rate at which the camera can
+		self.fps = 8               # fps should be the minimum constant rate at which the camera can
 		self.fourcc = "MJPG"       # capture images (with no decrease in speed over time; testing is required)
 		self.frameSize = (640,480) # video formats and sizes also depend and vary according to the camera used
 		self.video_filename = name_video
@@ -32,6 +32,7 @@ class VideoRecorder():
 		self.video_out = cv2.VideoWriter(self.video_filename, self.video_writer, self.fps, self.frameSize)
 		self.frame_counts = 1
 		self.start_time = time.time()
+		self.end_time = 0
 
 	
 	# Video starts being recorded 
@@ -48,7 +49,7 @@ class VideoRecorder():
 				
 				self.video_out.write(video_frame)
 				self.frame_counts += 1
-				time.sleep(0.14)
+				time.sleep(0.125)
 				
 				# Uncomment the following three lines to make the video to be
 				# displayed to screen while recording
@@ -73,6 +74,7 @@ class VideoRecorder():
 		if (self.open==True):
 			
 			self.open=False
+			self.end_time = time.time()
 			self.video_out.release()
 			self.video_cap.release()
 			cv2.destroyAllWindows()
@@ -91,7 +93,7 @@ class AudioRecorder():
 	def __init__(self):
 		
 		self.open = True
-		self.rate = 44100
+		self.rate = 8000 #44100
 		self.frames_per_buffer = 1024
 		self.channels = 2
 		self.format = pyaudio.paInt16
@@ -106,7 +108,7 @@ class AudioRecorder():
 
 	# Audio starts being recorded
 	def record(self):
-
+		time.sleep(2)
 		self.stream.start_stream()
 		while(self.open == True):
 			data=self.stream.read(self.frames_per_buffer)
@@ -139,12 +141,12 @@ class AudioRecorder():
 def start_AVrecording():
 	
 	global video_thread
-	#global audio_thread
+	global audio_thread
 
 	video_thread = VideoRecorder()
-	#audio_thread = AudioRecorder()
+	audio_thread = AudioRecorder()
 
-	#audio_thread.start()
+	audio_thread.start()
 	video_thread.start()
 
 	return
@@ -153,10 +155,10 @@ def stop_AVrecording():
 	global ntrial
 	global name_video
 	print("Stopping recording")
-	#audio_thread.stop()
+	audio_thread.stop()
 	video_thread.stop()
 	landmarks()
-	#muxing()
+	muxing()
 	file_manager()
 	ntrial = ntrial+1
 	name_video = 'output_phrase[%d]_[%d].avi' %(num_phrase, ntrial)
@@ -169,14 +171,15 @@ def muxing():
 	#	time.sleep(1)
 
 	frame_counts = video_thread.frame_counts
-	elapsed_time = time.time() - video_thread.start_time
+	#elapsed_time = time.time() - video_thread.start_time
+	elapsed_time = video_thread.end_time - video_thread.start_time
 	recorded_fps = frame_counts / elapsed_time
 	print("total frames " + str(frame_counts))
 	print("elapsed time " + str(elapsed_time))
 	print("recorded fps " + str(recorded_fps))
 #	 Merging audio and video signal
 	
-	if abs(recorded_fps - 6) >= 0.01:    # If the fps rate was higher/lower than expected, re-encode it to the expected
+	if abs(recorded_fps - video_thread.fps) >= 0.01:    # If the fps rate was higher/lower than expected, re-encode it to the expected
 								
 		print("Re-encoding")
 		cmd = "ffmpeg -r " + str(recorded_fps) + " -i marker-"+name_video+" -pix_fmt yuv420p -r 6 temp_video2.avi"
