@@ -12,8 +12,6 @@ import cv2
 import threading
 import numpy as np
 import os, sys
-import pyaudio
-import wave
 import subprocess
 
 class VideoRecorder():
@@ -104,65 +102,10 @@ class VideoRecorder():
 		video_thread = threading.Thread(target=self.record)
 		video_thread.start()
 
-class AudioRecorder():
-	
-	# Audio class based on pyAudio and Wave
-	def __init__(self):
-		
-		self.open = True
-		self.rate = 8000 #44100
-		self.frames_per_buffer = 1024
-		self.channels = 2
-		self.format = pyaudio.paInt16
-		self.audio_filename = "temp_audio.wav"
-		self.audio = pyaudio.PyAudio()
-		self.stream = self.audio.open(format=self.format,
-									  channels=self.channels,
-									  rate=self.rate,
-									  input=True,
-									  frames_per_buffer = self.frames_per_buffer)
-		self.audio_frames = []
-
-	# Audio starts being recorded
-	def record(self):
-		time.sleep(2)
-		self.stream.start_stream()
-		while(self.open == True):
-			data=self.stream.read(self.frames_per_buffer)
-			self.audio_frames.append(data)
-			if (self.open==False):
-				break
-
-	# Finishes the audio recording therefore the thread too    
-	def stop(self):
-		
-		if (self.open==True):
-			self.open = False
-			self.stream.stop_stream()
-			self.stream.close()
-			self.audio.terminate()
-
-			waveFile = wave.open(self.audio_filename, 'wb')
-			waveFile.setnchannels(self.channels)
-			waveFile.setsampwidth(self.audio.get_sample_size(self.format))
-			waveFile.setframerate(self.rate)
-			waveFile.writeframes(b''.join(self.audio_frames))
-			waveFile.close()
-		pass
-
-	# Launches the audio recording function using a thread
-	def start(self):
-		audio_thread = threading.Thread(target=self.record)
-		audio_thread.start()
-
 def start_AVrecording():
 	global video_thread
-	global audio_thread
 	if (recording==False):
 		video_thread = VideoRecorder()
-		audio_thread = AudioRecorder()
-
-		audio_thread.start()
 		video_thread.start()
 
 	return
@@ -174,10 +117,8 @@ def stop_AVrecording():
 	global nread
 	if (recording==True):
 		print("Stopping recording")
-		audio_thread.stop()
 		video_thread.stop()
 		landmarks()
-		muxing()
 		file_manager()
 		ntrial = ntrial+1
 		name_video = 'output_phrase[%d]_[%d].avi' %(num_phrase, ntrial)
@@ -190,37 +131,6 @@ def stop_AVrecording():
 	nread+=1
 	return
 	
-def muxing():
-	# Makes sure the threads have finished
-	#while threading.active_count() > 1:
-	#	time.sleep(1)
-
-	frame_counts = video_thread.frame_counts
-	elapsed_time = video_thread.end_time - video_thread.start_time
-	recorded_fps = frame_counts / elapsed_time
-	print("total frames " + str(frame_counts))
-	print("elapsed time " + str(elapsed_time))
-	print("recorded fps " + str(recorded_fps))
-#	 Merging audio and video signal
-	
-	if abs(recorded_fps - 6) >= 0.01:    # If the fps rate was higher/lower than expected, re-encode it to the expected
-								
-		print("Re-encoding")
-		cmd = "ffmpeg -r " + str(recorded_fps) + " -i marker-"+name_video+" -pix_fmt yuv420p -r 6 temp_video2.avi"
-		subprocess.call(cmd, shell=True)
-
-		print("Muxing")
-		cmd = "ffmpeg -ac 2 -channel_layout stereo -i temp_audio.wav -i temp_video2.avi -pix_fmt yuv420p " + "complete-"+name_video
-		subprocess.call(cmd, shell=True)
-
-	else:
-
-		print("Normal recording\nMuxing")
-		cmd = "ffmpeg -ac 2 -channel_layout stereo -i temp_audio.wav -i marker-"+name_video+" -pix_fmt yuv420p " + "complete-"+name_video
-		subprocess.call(cmd, shell=True)
-
-		print("..")
-	return
 
 	
 def landmarks():
@@ -280,10 +190,6 @@ def file_manager():
 	time.sleep(2)
 	local_path = os.getcwd()
 	str_video = str(name_video)
-	if os.path.exists(str(local_path) + "/temp_audio.wav"):
-		os.remove(str(local_path) + "/temp_audio.wav")
-	#if os.path.exists(str(local_path) + "/" + str_video):
-		#os.remove(str(local_path) + "/" + str_video)
 
 	if os.path.exists(str(local_path) + "/temp_video2.avi"):
 		os.remove(str(local_path) + "/temp_video2.avi")
@@ -322,7 +228,7 @@ def analyse_marker():
 	ris = np.zeros((int(n/l),m)) #array contentente la sottrazione tra le medie calcolate
 
 	while 1:
-		
+
 		#leggo il contenuto dei file marker, esco se uno dei due file e' finito
 		testo1 = f1.readline()
 		if testo1 == "":

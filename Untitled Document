@@ -1,5 +1,0 @@
-sudo apt-get install python-imaging-tk
-#pip install cffi
-sudo apt-get install portaudio19-dev
-sudo apt-get install python-all-dev
-pip install pyaudio
